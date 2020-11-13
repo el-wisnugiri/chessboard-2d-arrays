@@ -41,8 +41,6 @@ class ChessBoard:
         board_grid[7][6] = str(Pieces(3, 'white'))
         board_grid[7][7] = str(Pieces(2, 'white'))
 
-    f = open('../chess.txt', mode='w+')
-
     # print the initial board
     def print_chess_board(self):
 
@@ -54,3 +52,11 @@ class ChessBoard:
         for col in initial_board:
             print(axis_y, *col, sep=' ')
             axis_y -= 1
+
+    def write_pieces(self):
+        state = []
+        for col in self.chess_board:
+            for x in col:
+                state.append(x)
+        with open('chess.txt', 'r+') as file:
+            file.write("%s\n" % "".join(state))

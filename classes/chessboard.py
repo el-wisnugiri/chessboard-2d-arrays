@@ -1,3 +1,6 @@
+from classes.pieces import Pieces
+
+
 class ChessBoard:
     def __init__(self):
         self.rows = []
@@ -5,10 +8,49 @@ class ChessBoard:
             self.rows += x
 
         self.chess_board = []
-        for col in range(8, 0, -1):
-            dimensional_list = [(row + str(col)) for row in self.rows]
-            self.chess_board.append(dimensional_list)
+        for square in range(8, 0, -1):
+            append_list = ['.' for unused in self.rows]
+            self.chess_board.append(append_list)
 
+        self.initial_pieces()
+
+    # added the initial pieces to 2d arrays
+    def initial_pieces(self):
+        board_grid = self.chess_board
+        # black pieces
+        for p in range(8):
+            board_grid[1][p] = str(Pieces(1, 'black'))
+        board_grid[0][0] = str(Pieces(2, 'black'))
+        board_grid[0][1] = str(Pieces(3, 'black'))
+        board_grid[0][2] = str(Pieces(4, 'black'))
+        board_grid[0][3] = str(Pieces(5, 'black'))
+        board_grid[0][4] = str(Pieces(6, 'black'))
+        board_grid[0][5] = str(Pieces(4, 'black'))
+        board_grid[0][6] = str(Pieces(3, 'black'))
+        board_grid[0][7] = str(Pieces(2, 'black'))
+
+        # white pieces
+        for p in range(8):
+            board_grid[6][p] = str(Pieces(1, 'white'))
+        board_grid[7][0] = str(Pieces(2, 'white'))
+        board_grid[7][1] = str(Pieces(3, 'white'))
+        board_grid[7][2] = str(Pieces(4, 'white'))
+        board_grid[7][3] = str(Pieces(5, 'white'))
+        board_grid[7][4] = str(Pieces(6, 'white'))
+        board_grid[7][5] = str(Pieces(4, 'white'))
+        board_grid[7][6] = str(Pieces(3, 'white'))
+        board_grid[7][7] = str(Pieces(2, 'white'))
+
+    f = open('../chess.txt', mode='w+')
+
+    # print the initial board
     def print_chess_board(self):
-        for row in self.chess_board:
-            print(row)
+
+        initial_board = self.chess_board
+        axis_y = 8
+        # print the axis_x
+        print(" ", *self.rows, sep=" ")
+        # print axis_y and the rows
+        for col in initial_board:
+            print(axis_y, *col, sep=' ')
+            axis_y -= 1

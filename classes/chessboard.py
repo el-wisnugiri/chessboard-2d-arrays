@@ -16,6 +16,7 @@ class ChessBoard:
             self.chess_board.append(append_list)
 
         self.initial_pieces()
+        self.write_pieces()
         self.board = self.get_single_list(self.chess_board)
         self.squares = [
             'a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8',
@@ -99,12 +100,40 @@ class ChessBoard:
         # return the pieces on the targeted square inside the box
         return piece
 
+        # update the state of the board each time the player made a successful move
+
+    @staticmethod
+    def update_board_file(ori, destination):
+        with open('chess.txt', 'r+') as file:
+            # seek the index position of original square of the piece
+            file.seek(ori)
+            # read the piece string from the file
+            piece = file.read(1)
+            # seek the original position and replace it with '.'
+            file.seek(ori)
+            file.write('.')
+            # overwrite the piece in the destination index position in the file
+            file.seek(destination)
+            file.write(piece)
+
     # the move for each color will be "before-destination", example a2-a3.
     def move_piece(self, move):
+        # player turn var to check the turn
+        player_turn = str
+        if self.identifier % 2 == 0:
+            player_turn = Player(0)
+        else:
+            player_turn = Player(1)
+        move_validator = int
+
         # so if the move is a2-a3 it will be split as an array like this ['a2', 'a3']
         piece_move = move.split('-')
         original_square = piece_move[0]
         destination_square = piece_move[1]
+
+        # get the original index and destination index to update the board state in the txt file
+        ori_index = self.get_file_index(original_square)
+        destination_index = self.get_file_index(destination_square)
 
         # get the piece on targeted square
         piece_in_before = self.get_piece(original_square)
@@ -122,20 +151,19 @@ class ChessBoard:
         axis_x_destination = ord(destination_square[0]) - 97
         axis_y_destination = 8 - int(destination_square[1])
 
-        # player turn var to check the turn
-        player_turn = str
-        if self.identifier % 2 == 0:
-            player_turn = Player(0)
-        else:
-            player_turn = Player(1)
-        move_validator = int
+        # check of the move target is an empty square
+        if piece_in_before == '.' and piece_in_destination == '.':
+            print('-- Invalid Move --')
+            print('There is no pieces that can be move there')
+            move_validator = self.player_turn(-1)
 
-        if piece_in_destination == '.' or None:
+        elif piece_in_destination == '.' or None:
             # check if the player turn is black, the player cannot move the white pieces
             # this statement checks if the player turn color is the same color as the pieces that he wanted to move
             if str(player_turn) == piece_color.lower():
                 self.chess_board[axis_y_destination][axis_x_destination] = str(piece_in_before)
                 self.chess_board[axis_y_original][axis_x_original] = '.'
+                self.update_board_file(ori_index, destination_index)
                 print('-- Valid Move --')
                 move_validator = self.player_turn(0)
             else:
@@ -147,11 +175,13 @@ class ChessBoard:
             # check if the piece that being moved targeted the same color
             if piece_color == piece_target_color:
                 print('-- Invalid Move --')
+                print(f'{player_turn} cannot capture {piece_color} pieces')
                 move_validator = self.player_turn(-1)
             # if its different color killed the target
             else:
                 self.chess_board[axis_y_destination][axis_x_destination] = str(piece_in_before)
                 self.chess_board[axis_y_original][axis_x_original] = '.'
+                self.update_board_file(ori_index, destination_index)
                 print(f'EZ KILL from {piece_color}')
                 move_validator = self.player_turn(0)
 
@@ -159,11 +189,245 @@ class ChessBoard:
         self.board = self.get_single_list(self.chess_board)
         # print the board
         self.print_board()
+        # validate the move, if the move_validator int is not 0. then its not a valid move
         if move_validator == 0:
             self.identifier += 1
             return True
         return False
 
+    # my complicated castling logic
+    def castling_move(self, castling):
+        # player turn var to check the turn
+        player_turn = str
+        if self.identifier % 2 == 0:
+            player_turn = Player(0)
+        else:
+            player_turn = Player(1)
+        move_validator = int
+
+        # get the ori and destination square for white king (king side castling)
+        ori_square_white_king = 'e1'
+        destination_square_white_king = 'g1'
+
+        # get the original index and destination index to update the board state in the txt file
+        ori_white_king_index = self.get_file_index(ori_square_white_king)
+        destination_white_king_index = self.get_file_index(destination_square_white_king)
+
+        # get the ori and destination square for white king (queen side castling)
+        destination_square_white_king_qs = 'c1'
+
+        # get the original index and destination index to update the board state in the txt file (Queen Side)
+        destination_white_king_index_qs = self.get_file_index(destination_square_white_king_qs)
+
+        # get the ori and destination square for black king (king side)
+        ori_square_black_king = 'e8'
+        destination_square_black_king = 'g8'
+
+        # get the original index and destination index to update the board state in the txt file
+        ori_black_king_index = self.get_file_index(ori_square_black_king)
+        destination_black_king_index = self.get_file_index(destination_square_black_king)
+
+        # get the ori and destination square for black king (queen side)
+        destination_square_black_king_qs = 'c8'
+
+        # get the original index and destination index to update the board state in the txt file (Queen Side)
+        destination_black_king_index_qs = self.get_file_index(destination_square_black_king_qs)
+
+        # get the ori and destination square for white rook if we castle king side
+        ori_square_white_rook_ks = 'h1'
+        destination_square_white_rook_ks = 'f1'
+
+        # get the original index and destination index to update the board state in the txt file
+        ori_white_rook_ks_index = self.get_file_index(ori_square_white_rook_ks)
+        destination_white_rook_ks_index = self.get_file_index(destination_square_white_rook_ks)
+
+        # get the ori and destination square for white rook if we castle queen side
+        ori_square_white_rook_qs = 'a1'
+        destination_square_white_rook_qs = 'd1'
+
+        # get the original index and destination index to update the board state in the txt file (Queen Side)
+        ori_white_rook_qs_index = self.get_file_index(ori_square_white_rook_qs)
+        destination_white_rook_qs_index = self.get_file_index(destination_square_white_rook_qs)
+
+        # get the ori and destination square for black rook if we castle king side
+        ori_square_black_rook_ks = 'h8'
+        destination_square_black_rook_ks = 'f8'
+
+        # get the original index and destination index to update the board state in the txt file
+        ori_black_rook_ks_index = self.get_file_index(ori_square_black_rook_ks)
+        destination_black_rook_ks_index = self.get_file_index(destination_square_black_rook_ks)
+
+        # get the ori and destination square for black rook if we castle king side
+        ori_square_black_rook_qs = 'a8'
+        destination_square_black_rook_qs = 'd8'
+
+        # get the original index and destination index to update the board state in the txt file
+        ori_black_rook_qs_index = self.get_file_index(ori_square_black_rook_qs)
+        destination_black_rook_qs_index = self.get_file_index(destination_square_black_rook_qs)
+
+        # get white king piece in its ori square
+        ori_white_king = self.get_piece(ori_square_white_king)
+
+        # get black king piece in its ori square
+        ori_black_king = self.get_piece(ori_square_black_king)
+
+        # get white rook piece in its ori square on king side (ks)
+        ori_white_rook_ks = self.get_piece(ori_square_white_rook_ks)
+
+        # get white rook piece in its ori square on king side (qs)
+        ori_white_rook_qs = self.get_piece(ori_square_white_rook_qs)
+
+        # get black rook piece in its ori square on king side (ks)
+        ori_black_rook_ks = self.get_piece(ori_square_black_rook_ks)
+
+        # get black rook piece in its ori square on king side (qs)
+        ori_black_rook_qs = self.get_piece(ori_square_black_rook_qs)
+
+        # get the original matrix x and y of white king for the 2d list in order to move the pieces
+        axis_x_ori_white_king = ord(ori_square_white_king[0]) - 97
+        axis_y_ori_white_king = 8 - int(ori_square_white_king[1])
+
+        # get the original matrix x and y of black king for the 2d list in order to move the pieces
+        axis_x_ori_black_king = ord(ori_square_black_king[0]) - 97
+        axis_y_ori_black_king = 8 - int(ori_square_black_king[1])
+
+        # get the original matrix x and y of white rook for the 2d list in order to move the pieces
+        axis_x_ori_white_rook_ks = ord(ori_square_white_rook_ks[0]) - 97
+        axis_y_ori_white_rook_ks = 8 - int(ori_square_white_rook_ks[1])
+
+        # get the original matrix x and y of white rook for the 2d list in order to move the pieces (Queen Side)
+        axis_x_ori_white_rook_qs = ord(ori_square_white_rook_qs[0]) - 97
+        axis_y_ori_white_rook_qs = 8 - int(ori_square_white_rook_qs[1])
+
+        # get the original matrix x and y of black rook for the 2d list in order to move the pieces
+        axis_x_ori_black_rook_ks = ord(ori_square_black_rook_ks[0]) - 97
+        axis_y_ori_black_rook_ks = 8 - int(ori_square_black_rook_ks[1])
+
+        # get the original matrix x and y of black rook for the 2d list in order to move the pieces (Queen Side)
+        axis_x_ori_black_rook_qs = ord(ori_square_black_rook_qs[0]) - 97
+        axis_y_ori_black_rook_qs = 8 - int(ori_square_black_rook_qs[1])
+
+        # get the destination matrix x and y of white king for the 2d list in order to move the pieces
+        axis_x_destination_white_king = ord(destination_square_white_king[0]) - 97
+        axis_y_destination_white_king = 8 - int(destination_square_white_king[1])
+
+        # get the destination matrix x and y of white king for the 2d list in order to move the pieces (Queen Side)
+        axis_x_destination_white_king_qs = ord(destination_square_white_king_qs[0]) - 97
+        axis_y_destination_white_king_qs = 8 - int(destination_square_white_king_qs[1])
+
+        # get the destination matrix x and y of black king for the 2d list in order to move the pieces
+        axis_x_destination_black_king = ord(destination_square_black_king[0]) - 97
+        axis_y_destination_black_king = 8 - int(destination_square_black_king[1])
+
+        # get the destination matrix x and y of black king for the 2d list in order to move the pieces (Queen Side)
+        axis_x_destination_black_king_qs = ord(destination_square_black_king_qs[0]) - 97
+        axis_y_destination_black_king_qs = 8 - int(destination_square_black_king_qs[1])
+
+        # get the destination matrix x and y for the 2d list in order to move the pieces
+        axis_x_destination_white_rook_ks = ord(destination_square_white_rook_ks[0]) - 97
+        axis_y_destination_white_rook_ks = 8 - int(destination_square_white_rook_ks[1])
+
+        # get the destination matrix x and y for the 2d list in order to move the pieces (Queen Side)
+        axis_x_destination_white_rook_qs = ord(destination_square_white_rook_qs[0]) - 97
+        axis_y_destination_white_rook_qs = 8 - int(destination_square_white_rook_qs[1])
+
+        # get the destination matrix x and y for the 2d list in order to move the pieces
+        axis_x_destination_black_rook_ks = ord(destination_square_black_rook_ks[0]) - 97
+        axis_y_destination_black_rook_ks = 8 - int(destination_square_black_rook_ks[1])
+
+        # get the destination matrix x and y for the 2d list in order to move the pieces (Queen Side)
+        axis_x_destination_black_rook_qs = ord(destination_square_black_rook_qs[0]) - 97
+        axis_y_destination_black_rook_qs = 8 - int(destination_square_black_rook_qs[1])
+
+        # Castling on King Side
+        if castling.upper() == 'O-O':
+            if str(player_turn) == 'white' and self.castle_white_king_side():
+                # move the king
+                self.chess_board[axis_y_destination_white_king][axis_x_destination_white_king] = str(ori_white_king)
+                self.chess_board[axis_y_ori_white_king][axis_x_ori_white_king] = '.'
+                # move the rook on king side
+                self.chess_board[axis_y_destination_white_rook_ks][axis_x_destination_white_rook_ks] = str(
+                    ori_white_rook_ks)
+                self.chess_board[axis_y_ori_white_rook_ks][axis_x_ori_white_rook_ks] = '.'
+                # update king move in txt file
+                self.update_board_file(ori_white_king_index, destination_white_king_index)
+                # update rook move in txt file
+                self.update_board_file(ori_white_rook_ks_index, destination_white_rook_ks_index)
+                print('-- Valid Move --')
+                print(f'{player_turn} just castled!')
+                move_validator = self.player_turn(0)
+
+            elif str(player_turn) == 'black' and self.castle_black_king_side():
+                # move the king
+                self.chess_board[axis_y_destination_black_king][axis_x_destination_black_king] = str(ori_black_king)
+                self.chess_board[axis_y_ori_black_king][axis_x_ori_black_king] = '.'
+                # move the rook on king side
+                self.chess_board[axis_y_destination_black_rook_ks][axis_x_destination_black_rook_ks] = str(
+                    ori_black_rook_ks)
+                self.chess_board[axis_y_ori_black_rook_ks][axis_x_ori_black_rook_ks] = '.'
+                # update king move in txt file
+                self.update_board_file(ori_black_king_index, destination_black_king_index)
+                # update rook move in txt file
+                self.update_board_file(ori_black_rook_ks_index, destination_black_rook_ks_index)
+                print('-- Valid Move --')
+                print(f'{player_turn} just castled!')
+                move_validator = self.player_turn(0)
+
+            else:
+                print('-- Invalid Move --')
+                print('Cannot castle if there is pieces between rook and king')
+                move_validator = self.player_turn(-1)
+
+        # Castling on Queen Side
+        elif castling.upper() == 'O-O-O':
+            if str(player_turn) == 'white' and self.castle_white_queen_side():
+                self.chess_board[axis_y_destination_white_king_qs][axis_x_destination_white_king_qs] = str(
+                    ori_white_king)
+                self.chess_board[axis_y_ori_white_king][axis_x_ori_white_king] = '.'
+                # move the rook on king side
+                self.chess_board[axis_y_destination_white_rook_qs][axis_x_destination_white_rook_qs] = str(
+                    ori_white_rook_qs)
+                self.chess_board[axis_y_ori_white_rook_qs][axis_x_ori_white_rook_qs] = '.'
+                # update king move in txt file
+                self.update_board_file(ori_white_king_index, destination_white_king_index_qs)
+                # update rook move in txt file
+                self.update_board_file(ori_white_rook_qs_index, destination_white_rook_qs_index)
+                print('-- Valid Move --')
+                print(f'{player_turn} just castled!')
+                move_validator = self.player_turn(0)
+
+            elif str(player_turn) == 'black' and self.castle_black_queen_side():
+                self.chess_board[axis_y_destination_black_king_qs][axis_x_destination_black_king_qs] = str(
+                    ori_white_king)
+                self.chess_board[axis_y_ori_black_king][axis_x_ori_black_king] = '.'
+                # move the rook on king side
+                self.chess_board[axis_y_destination_black_rook_qs][axis_x_destination_black_rook_qs] = str(
+                    ori_black_rook_qs)
+                self.chess_board[axis_y_ori_black_rook_qs][axis_x_ori_black_rook_qs] = '.'
+                # update king move in txt file
+                self.update_board_file(ori_black_king_index, destination_black_king_index_qs)
+                # update rook move in txt file
+                self.update_board_file(ori_black_rook_qs_index, destination_black_rook_qs_index)
+                print('-- Valid Move --')
+                print(f'{player_turn} just castled!')
+                move_validator = self.player_turn(0)
+
+            else:
+                print('-- Invalid Move --')
+                print('Cannot castle if there is pieces between rook and king')
+                move_validator = self.player_turn(-1)
+
+        # update the board if the player made a successful move
+        self.board = self.get_single_list(self.chess_board)
+        # print the board
+        self.print_board()
+        # validate the move, if the move_validator int is not 0. then its not a valid move
+        if move_validator == 0:
+            self.identifier += 1
+            return True
+        return False
+
+    # check the pieces color, if its lower cases then its black pieces
     @staticmethod
     def check_piece_color(piece):
         if piece.islower():
@@ -171,8 +435,55 @@ class ChessBoard:
         else:
             return 'white'
 
+    # return num that later will be used to validate a move
+    # a valid move will be identified by 0 and other than 0 is an invalid move
     @staticmethod
     def player_turn(num):
         if num == 0:
             return num
         return num
+
+    # get the index position of a piece and this will be used to do seek and overwrite
+    def get_file_index(self, square):
+        squares = self.squares
+        index = squares.index(square)
+
+        return index
+
+    # validate castling on white king side
+    def castle_white_king_side(self):
+        square_one = self.get_piece('f1')
+        square_two = self.get_piece('g1')
+
+        if square_one == '.' and square_two == '.':
+            return True
+        return False
+
+    # validate castling on white queen side
+    def castle_white_queen_side(self):
+        square_one = self.get_piece('b1')
+        square_two = self.get_piece('c1')
+        square_three = self.get_piece('d1')
+
+        if square_one == '.' and square_two == '.' and square_three == '.':
+            return True
+        return False
+
+    # validate castling on black king side
+    def castle_black_king_side(self):
+        square_one = self.get_piece('f8')
+        square_two = self.get_piece('g8')
+
+        if square_one == '.' and square_two == '.':
+            return True
+        return False
+
+    # validate castling on black queen side
+    def castle_black_queen_side(self):
+        square_one = self.get_piece('b8')
+        square_two = self.get_piece('c8')
+        square_three = self.get_piece('d8')
+
+        if square_one == '.' and square_two == '.' and square_three == '.':
+            return True
+        return False
